@@ -9,6 +9,11 @@
 //1) Add a second UIAlertController that gets shown when the user taps a picture, asking them whether they want to rename the person or delete them.
 //2) Try using picker.sourceType = .camera when creating your image picker, which will tell it to create a new image by taking a photo. This is only available on devices (not on the simulator) so you might want to check the return value of UIImagePickerController.isSourceTypeAvailable() before trying to use it!
 //3) Modify project 1 so that it uses a collection view controller rather than a table view controller. I recommend you keep a copy of your original table view controller code so you can refer back to it later on.
+//Challenge from Project 12A and 12B
+//Modify project 1 so that it remembers how many times each storm image was shown – you don’t need to show it anywhere, but you’re welcome to try modifying your original copy of project 1 to show the view count as a subtitle below each image name in the table view.
+//Modify project 2 so that it saves the player’s highest score, and shows a special message if their new score beat the previous high score.
+//Modify project 5 so that it saves the current word and all the player’s entries to UserDefaults, then loads them back when the app launches.
+
 
 import UIKit
 
@@ -18,9 +23,11 @@ class MainVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, UI
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
+        loadFromUserDefaults()
         setupNavBar()
         setupCollectionView()
+    
     }
     
     func setupNavBar() {
@@ -80,6 +87,7 @@ class MainVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, UI
         collectionView.reloadData()
         
         dismiss(animated: true)
+        save()
     }
     
     func getDocumentsDirectory() -> URL {
@@ -122,6 +130,7 @@ class MainVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, UI
             person.name = newName
 
             self?.collectionView.reloadData()
+            self?.save()
         })
         
         ac.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
@@ -132,4 +141,27 @@ class MainVC: UICollectionViewController, UICollectionViewDelegateFlowLayout, UI
         present(ac, animated: true)
     }
     
+    func save() {
+        let jsonEncoder = JSONEncoder()
+        if let savedData = try? jsonEncoder.encode(people) {
+            let defaults = UserDefaults.standard
+            defaults.set(savedData, forKey:"people")
+        } else {
+            print("Failed to save people.")
+        }
+    }
+    
+    func loadFromUserDefaults() {
+        let defaults = UserDefaults.standard
+        
+        if let savedPeople = defaults.object(forKey: "people") as? Data {
+            let jsonDecoder = JSONDecoder()
+            
+            do {
+                people = try jsonDecoder.decode([Person].self, from: savedPeople)
+            } catch {
+                print("Failed to load people.")
+            }
+        }
+    }
 }
